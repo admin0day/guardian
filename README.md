@@ -3,4 +3,5 @@ A decentralized GUI chat node based on nuklear and SDL2, support copy/cut and pa
 
 TODO:
 1. QUIC protocol
-2. KadmliaP2P
+2. Kadmlia P2P
+3. Merkle DAG data storage
