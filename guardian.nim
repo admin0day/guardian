@@ -33,7 +33,6 @@ proc listen() =
       if line != "": 
         zeroMem(addr received[0], received.len) 
         var message = fmt"[{address}]:{line}"
-        echo message
         copyMem(addr received[0], message.cstring, message.len)
         if playChannel(-1, sound, 0) == -1:
           echo $sdl2.getError()
