@@ -335,6 +335,7 @@ var buffers*: array[256, char]
 var current* {.global.} : ptr char = addr buffers[0]
 
 var buffercs*: cstring = cast[cstring](addr buffers[0])
+var received*: cstring = cast[cstring](alloc0(256))
 
 let ipv6Address = parseFile("ipconfig.json")["dial_ipv6"].getStr() 
 

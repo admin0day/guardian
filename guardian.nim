@@ -2,7 +2,7 @@ import nimnuklear/nuklear except true, false, char, int, PI
 import opengl, sdl2, sdl2/net, sdl2/mixer, sdl2/ttf
 
 import nuklear_sdl_gl3
-import asyncnet, asyncdispatch, strutils, nativesockets, threadpool, math
+import asyncnet, asyncdispatch, strutils, nativesockets, threadpool, math, tables, strformat
 
 var running = true
 
@@ -11,7 +11,7 @@ if sdl2.init(INIT_EVERYTHING) != SdlSuccess:
 defer: sdl2.quit()
 
 proc listen() = 
-  var clients : seq[AsyncSocket]
+  var clients = initTable[string, AsyncSocket]()
 
   var channel : cint
   var audio_rate : cint
@@ -26,15 +26,17 @@ proc listen() =
   defer: freeChunk sound; mixer.closeAudio()
   if sound == nil :
     echo "nil chunk"
-  proc processClient(client: AsyncSocket) {.async.} =
+  proc processClient(address: string, client: AsyncSocket) {.async.} =
+    defer: client.close()
     while true:
       let line = await client.recv(256)
       if line != "": 
-        zeroMem(buffercs, buffercs.len)
-        copyMem(addr buffers[0], line.cstring, line.len)
+        zeroMem(addr received[0], received.len) 
+        var message = fmt"[{address}]:{line}"
+        echo message
+        copyMem(addr received[0], message.cstring, message.len)
         if playChannel(-1, sound, 0) == -1:
           echo $sdl2.getError()
-
 
   proc serve() {.async.} =
     var server = newAsyncSocket(domain = AF_INET6)
@@ -43,9 +45,9 @@ proc listen() =
     server.listen()
 
     while true:
-      let client = await server.accept()
-      clients.add client
-      asyncCheck processClient(client)
+      let (address, client) = await server.acceptAddr()
+      clients[address] = client
+      asyncCheck processClient(address, client)
 
   asyncCheck serve()
   runForever()
@@ -116,8 +118,12 @@ proc GUI() =
 
       ##  GUI
       if begin(ctx, "守护者".cstring,
-               rect(x:50, y:50, w:800, h:600),
+               rect(x:50, y:50, w:800, h:550),
                flags(WINDOW_BORDER or WINDOW_MOVABLE or WINDOW_SCALABLE or WINDOW_MINIMIZABLE or WINDOW_TITLE or WINDOW_CLOSABLE)) == 1:
+
+        layout_row_dynamic(ctx, 100, 1)
+        var receivedLenght = received.len.cint
+        discard edit_string(ctx, EDIT_BOX.flags, received, addr(receivedLenght), 255, filter_default)
 
 
         layout_row_dynamic(ctx, 200, 1)
@@ -131,14 +137,10 @@ proc GUI() =
         layout_row_dynamic(ctx, 20, 1)
         label(ctx, "background:", TEXT_LEFT.flags)
         layout_row_dynamic(ctx, 25, 1)
-        if combo_begin_color(ctx, rgb_cf(bg),vec2(x: widget_width(ctx), y: 400)) == 1:
+        if combo_begin_color(ctx, rgb_cf(bg),vec2(x: widget_width(ctx), y: 140)) == 1:
           layout_row_dynamic(ctx, 120, 1)
           bg = color_picker(ctx, bg, RGBA)
-          layout_row_dynamic(ctx, 25, 1)
-          bg.r = propertyf(ctx, "#R:", 0, bg.r, 1.0, 0.01, 0.005)
-          bg.g = propertyf(ctx, "#G:", 0, bg.g, 1.0, 0.01, 0.005)
-          bg.b = propertyf(ctx, "#B:", 0, bg.b, 1.0, 0.01, 0.005)
-          bg.a = propertyf(ctx, "#A:", 0, bg.a, 1.0, 0.01, 0.005)
+
           combo_end(ctx)
       nuklear.end(ctx)
       win.getSize(win_width, win_height)
