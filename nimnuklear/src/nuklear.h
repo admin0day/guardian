@@ -2,6 +2,7 @@
 #define NK_NUKLEAR_H_
 
 #ifdef __cplusplus
+#include <stdarg.h>
 extern "C" {
 #endif
 /*
