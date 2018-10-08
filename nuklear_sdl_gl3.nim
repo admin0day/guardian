@@ -338,6 +338,7 @@ var buffercs*: cstring = cast[cstring](addr buffers[0])
 var received*: cstring = cast[cstring](alloc0(256))
 
 let ipv6Address = parseFile("ipconfig.json")["dial_ipv6"].getStr() 
+let ipv4Address = parseFile("ipconfig.json")["dial_ipv4"].getStr() 
 
 proc nk_sdl_handle_event*(evt: ptr sdl2.Event): cint =
   const SCANCODE_LCTRL = system.int(sdl2.SDL_SCANCODE_LCTRL)
@@ -354,7 +355,7 @@ proc nk_sdl_handle_event*(evt: ptr sdl2.Event): cint =
       var ctrlReturn = down.cint and state[SCANCODE_LCTRL].cint
       if ctrlReturn == 1:
         try:
-          var socket = dial(ipv6Address, Port(1234))
+          var socket = dial(ipv4Address, Port(1234))
           defer: socket.close
           var content = $buffercs
           socket.send(content)
