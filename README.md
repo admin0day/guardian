@@ -3,6 +3,7 @@ A decentralized GUI chat node based on nuklear and SDL2, support copy/cut and pa
 
 # Compile and run
 nimble install packedjson opengl
+
 nim cpp -r -d:release -d:nimPinToCpu --hints:off --threads:on guardian.nim
 
 # TODO:
